@@ -3,7 +3,7 @@ const Soldier = require("../models/soldier");
 
 const router = express.Router();
 
-router.post("/soldiers", async (req, res) => {
+router.post("", async (req, res) => {
   const soldier = new Soldier(req.body);
 
   try {
@@ -14,11 +14,11 @@ router.post("/soldiers", async (req, res) => {
   }
 });
 
-router.get("/soldiers", async (req, res) => {
+router.get("", async (req, res) => {
   try {
-    const soldiers = await Soldier.find({});
+    const soldiers = await Soldier.find({});    
     if (!soldiers) {
-      return res.status(404).send("we have no soldiers hes");
+      return res.status(404).send("we have no soldiers");
     }
     res.send(soldiers);
   } catch (e) {
@@ -26,7 +26,7 @@ router.get("/soldiers", async (req, res) => {
   }
 });
 
-router.get("/soldiers/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const soldier = await Soldier.findById(req.params.id);
     if (!soldier) {
@@ -37,7 +37,7 @@ router.get("/soldiers/:id", async (req, res) => {
     res.status(500).send();
   }
 });
-router.get("/soldiers/:id/group", async (req, res) => {
+router.get("/:id/group", async (req, res) => {
   try {
     const soldier = await Soldier.findById(req.params.id).populate("group");
     if (!soldier) {
@@ -49,32 +49,38 @@ router.get("/soldiers/:id/group", async (req, res) => {
     res.status(500).send(e);
   }
 });
-router.patch("/soldiers/:id", async (req, res) => {
+router.patch("/:id", async (req, res) => {
   const updates = Object.keys(req.body);
-  const allowedUpdates = ["name", "age"];
+  const allowedUpdates = ["name", "army_number","identity_number","birth_date","group"];
   const isValidOperations = updates.every((update) =>
     allowedUpdates.includes(update),
   );
   if (!isValidOperations) {
-    return res.status(404).send("not valid params");
+    return res.status(400).send("not valid params");
   }
   try {
     const soldier = await Soldier.findById(req.params.id);
     updates.forEach((update) => (soldier[update] = req.body[update]));
-    await soldier.save();
+    
     if (!soldier) {
       return res.status(404).send("soldier undifined");
     }
+    await soldier.save();
     res.send(soldier);
   } catch (e) {
     res.status(500).send("error in update");
   }
 });
-router.delete("/soldiers/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
-    const soldier = await Soldier.findByIdAndDelete(req.params.id, req.body);
+    const soldier = await Soldier.findByIdAndDelete(req.params.id);
     if (!soldier) {
       return res.status(404).send("soldier undifined");
+    }
+    const group = await soldier.populate("group")
+    if(group){
+      group.members = group.members.filter(member => member != soldier._id)
+      await group.save()
     }
     res.send(soldier);
   } catch (e) {

@@ -1,34 +1,33 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const soldierSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      unique: true,
       required: true,
     },
-    age: {
-      type: String,
-      required: true,
-      validate(value) {
-        if (value < 18) {
-          throw new Error("and Jane you early");
-        }
-      },
+    army_number:{
+      type:Number,
+      unuqie:true,
+      require:true 
     },
-  },
-  {
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
+    identity_number:{
+      type:Number,
+      unique:true,
+      required:true
+    },
+    birth_date:{
+      type:String,
+      required:true
+    },
+    group:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref:"Group"
+    }
   },
 );
-
-soldierSchema.virtual("group", {
-  ref: "Group",
-  localField: "_id",
-  foreignField: "members",
-  justOne: true,
-});
 
 const Soldier = mongoose.model("Soldier", soldierSchema);
 
