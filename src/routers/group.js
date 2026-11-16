@@ -1,9 +1,10 @@
 const express = require("express");
 const Group = require("../models/group");
+const auth = require("../middleware/auth");
 
 const router = express.Router();
 
-router.post("", async (req, res) => {
+router.post("", auth, async (req, res) => {
   const group = new Group(req.body);
   try {
     await group.save();
@@ -13,7 +14,7 @@ router.post("", async (req, res) => {
   }
 });
 
-router.get("", async (req, res) => {
+router.get("", auth, async (req, res) => {
   try {
     const groups = await Group.find({});
     if (!groups) {
@@ -25,7 +26,7 @@ router.get("", async (req, res) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
     const group = await Group.findById(req.params.id);
     if (!group) {
@@ -37,7 +38,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.get("/:id/leader", async (req, res) => {
+router.get("/:id/leader", auth, async (req, res) => {
   try {
     const group = await Group.findById(req.params.id);
     if (!group) {
@@ -50,7 +51,7 @@ router.get("/:id/leader", async (req, res) => {
   }
 });
 
-router.get("/:id/membersNumber", async (req, res) => {
+router.get("/:id/membersNumber", auth, async (req, res) => {
   try {
     const group = await Group.findById(req.params.id).populate("members");
     if (!group) {
@@ -62,7 +63,7 @@ router.get("/:id/membersNumber", async (req, res) => {
   }
 });
 
-router.get("/:id/members", async (req, res) => {
+router.get("/:id/members", auth, async (req, res) => {
   try {
     const group = await Group.findById(req.params.id)
       .populate("members", "name -_id")
@@ -76,7 +77,7 @@ router.get("/:id/members", async (req, res) => {
   }
 });
 
-router.patch("/:id", async (req, res) => {
+router.patch("/:id", auth, async (req, res) => {
   const updates = Object.keys(req.body);
   const allowedUpdates = ["name", "leader"];
   const isValidOperations = updates.every((update) =>
@@ -86,32 +87,33 @@ router.patch("/:id", async (req, res) => {
     return res.status(400).send("not valid params");
   }
   try {
-    const group = await Group.findById(req.params.id)
+    const group = await Group.findById(req.params.id);
     if (!group) {
       return res.status(404).send("group not found");
     }
-    updates.forEach((update)=>(soldier[update] = req.body[update]))
-    await group.save()
+    updates.forEach((update) => (group[update] = req.body[update]));
+    await group.save();
     res.send(group);
   } catch (e) {
     return res.status(500).send();
   }
 });
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   try {
-    const group = await Group.findByIdAndDelete(req.params.id).populate("members");
+    const group = await Group.findByIdAndDelete(req.params.id).populate(
+      "members",
+    );
     if (!group) {
       return res.status(404).send("group undifined");
     }
-    
-    const members = group.members.forEach(async (member)=> {
-      member.group = undefined,
-      await member.save()
-    })
+
+    const members = group.members.forEach(async (member) => {
+      ((member.group = undefined), await member.save());
+    });
 
     res.send({
-      group:group,
-      members:members
+      group: group,
+      members: members,
     });
   } catch (e) {
     res.status(500).send();

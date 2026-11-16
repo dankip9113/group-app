@@ -9,7 +9,6 @@ const groupSchema = new mongoose.Schema(
     },
     leader: {
       type: mongoose.Schema.Types.ObjectId,
-      unique: true,
       ref: "Soldier",
     },
   },
